@@ -92,7 +92,33 @@ namespace Bank.Models
             }
             return user;
         }
-                
+
+        //Get the details of a particular user  
+        public User GetUserData(long accountNumber)
+        {
+            var user = new User();
+
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string sqlQuery = "SELECT * FROM tblUser WHERE AccountNumber= " + accountNumber;
+                SqlCommand cmd = new SqlCommand(sqlQuery, con);
+
+                con.Open();
+                SqlDataReader rdr = cmd.ExecuteReader();
+
+                while (rdr.Read())
+                {
+                    user.ID = Convert.ToInt64(rdr["ID"]);
+                    user.LoginName = rdr["LoginName"].ToString();
+                    user.Password = rdr["Password"].ToString();
+                    user.AccountNumber = Convert.ToInt64(rdr["AccountNumber"]);
+                    user.Balance = Convert.ToDecimal(rdr["Balance"]);
+                    user.CreateDate = Convert.ToDateTime(rdr["CreateDate"]);
+                }
+            }
+            return user;
+        }
+
         public bool LoginNameExists(string loginName)
         {
             bool ret = false;
@@ -112,6 +138,24 @@ namespace Bank.Models
             }
 
             return ret;
+        }
+
+        public string ValidateLogin(User user)
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                SqlCommand cmd = new SqlCommand("spValidateUserLogin", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@LoginName", user.LoginName);
+                cmd.Parameters.AddWithValue("@Password", user.Password);
+
+                con.Open();
+                string result = cmd.ExecuteScalar().ToString();
+                con.Close();
+
+                return result;
+            }
         }
     }
 }

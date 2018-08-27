@@ -1,94 +1,107 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<Bank.Models.Transaction>
+
+@{
+    ViewData["Title"] = "Account details";
 }
 
-<div id="myCarousel" class="carousel slide" data-ride="carousel" data-interval="6000">
-    <ol class="carousel-indicators">
-        <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
-        <li data-target="#myCarousel" data-slide-to="1"></li>
-        <li data-target="#myCarousel" data-slide-to="2"></li>
-    </ol>
-    <div class="carousel-inner" role="listbox">
-        <div class="item active">
-            <img src="~/images/banner1.svg" alt="ASP.NET" class="img-responsive" />
-            <div class="carousel-caption" role="option">
-                <p>
-                    Learn how to build ASP.NET apps that can run anywhere.
-                    <a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkID=525028&clcid=0x409">
-                        Learn More
-                    </a>
-                </p>
-            </div>
-        </div>
-        <div class="item">
-            <img src="~/images/banner2.svg" alt="Visual Studio" class="img-responsive" />
-            <div class="carousel-caption" role="option">
-                <p>
-                    There are powerful new features in Visual Studio for building modern web apps.
-                    <a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkID=525030&clcid=0x409">
-                        Learn More
-                    </a>
-                </p>
-            </div>
-        </div>
-        <div class="item">
-            <img src="~/images/banner3.svg" alt="Microsoft Azure" class="img-responsive" />
-            <div class="carousel-caption" role="option">
-                <p>
-                    Learn how Microsoft's Azure cloud platform allows you to build, deploy, and scale web apps.
-                    <a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkID=525027&clcid=0x409">
-                        Learn More
-                    </a>
-                </p>
-            </div>
-        </div>
-    </div>
-    <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
-        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-        <span class="sr-only">Previous</span>
-    </a>
-    <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
-        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-        <span class="sr-only">Next</span>
-    </a>
+<ul class="nav navbar-nav navbar-right">
+    <li>
+        <a asp-controller="Home" asp-action="Logout">Sign Out</a>
+    </li>
+</ul>
+
+<h2>Account Details</h2>
+
+<div class="form-group">
+    <a asp-controller="Home" asp-action="Deposit" class="btn btn-info">Deposit</a>
+    <a asp-controller="Home" asp-action="Withdraw" class="btn btn-info">Withdraw</a>
+    <a asp-controller="Home" asp-action="Transfer" class="btn btn-info">Transfer</a>
 </div>
 
-<div class="row">
-    <div class="col-md-3">
-        <h2>Application uses</h2>
-        <ul>
-            <li>Sample pages using ASP.NET Core MVC</li>
-            <li>Theming using <a href="https://go.microsoft.com/fwlink/?LinkID=398939">Bootstrap</a></li>
-        </ul>
-    </div>
-    <div class="col-md-3">
-        <h2>How to</h2>
-        <ul>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkID=398600">Add a Controller and View</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkId=699315">Manage User Secrets using Secret Manager.</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkId=699316">Use logging to log a message.</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkId=699317">Add packages using NuGet.</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkId=699319">Target development, staging or production environment.</a></li>
-        </ul>
-    </div>
-    <div class="col-md-3">
-        <h2>Overview</h2>
-        <ul>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkId=518008">Conceptual overview of what is ASP.NET Core</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkId=699320">Fundamentals of ASP.NET Core such as Startup and middleware.</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkId=398602">Working with Data</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkId=398603">Security</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkID=699321">Client side development</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkID=699322">Develop on different platforms</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkID=699323">Read more on the documentation site</a></li>
-        </ul>
-    </div>
-    <div class="col-md-3">
-        <h2>Run &amp; Deploy</h2>
-        <ul>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkID=517851">Run your app</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkID=517853">Run tools such as EF migrations and more</a></li>
-            <li><a href="https://go.microsoft.com/fwlink/?LinkID=398609">Publish to Microsoft Azure Web Apps</a></li>
-        </ul>
-    </div>
-</div>
+
+<table class="table">
+    <tr>
+        <td>LoginName:</td>
+        <td>@ViewData["LoginName"]</td>
+    </tr>
+
+    <tr>
+        <td>AccountNumber:</td>
+        <td>@ViewData["AccountNumber"]</td>
+    </tr>
+
+    <tr>
+        <td>Balance:</td>
+        <td>@ViewData["Balance"]</td>
+    </tr>
+
+</table>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.ID)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AccountNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Type)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Amount)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Source)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Destination)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreateDate)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (ViewData["Message"] != null)
+        {
+            <tr>
+                <td>
+                    <p class="alert alert-danger">@ViewData["Message"]</p>
+                </td>
+            </tr>
+        }
+        else
+        {
+
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ID)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.AccountNumber)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Type)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Amount)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Source)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Destination)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.CreateDate)
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

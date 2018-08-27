@@ -4,9 +4,7 @@
     ViewData["Title"] = "All Accounts";
 }
 <h2>Index</h2>
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+
 <table class="table">
     <thead>
         <tr>
@@ -42,7 +40,7 @@
                     @Html.DisplayFor(modelItem => item.CreateDate)
                 </td>
                 <td>
-                    <a asp-action="Details" asp-route-loginName="@item.LoginName">Details</a>
+                    <a asp-controller="User" asp-action="Details" asp-route-loginName="@item.LoginName">Details</a>
                 </td>
             </tr>
         }

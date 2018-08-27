@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Bank.Models;
 using Microsoft.Extensions.Configuration;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Bank.Controllers
 {
@@ -19,14 +21,23 @@ namespace Bank.Controllers
 
         public IActionResult Index()
         {
-            var lstUsers = userDAL.GetAllUsers();
-            
-            if(lstUsers.Count() == 0)
+            try
             {
-                return NotFound();
+                var lstUsers = userDAL.GetAllUsers();
+
+                if (lstUsers.Count() == 0)
+                {
+                    return NotFound();
+                }
+
+                return View(lstUsers);
+            }
+            catch(Exception e)
+            {
+                ViewData["Message"] = e.Message;
+                return View();
             }
 
-            return View(lstUsers);
         }
 
         [HttpGet]
@@ -38,40 +49,81 @@ namespace Bank.Controllers
         [HttpPost]
         public IActionResult Create([Bind]User user)
         {
-            if (ModelState.IsValid)
+            try
             {
-                if(userDAL.LoginNameExists(user.LoginName) != true)
+                if (ModelState.IsValid)
                 {
-                    userDAL.AddUser(user);
-                }
-                else
-                {
-                    ViewData["Message"] = "Login Name " + user.LoginName + " already exists";
+                    if (userDAL.LoginNameExists(user.LoginName) != true)
+                    {
+                        userDAL.AddUser(user);
 
-                    return View();
+                        ViewData["SuccessMessage"] = "User has been created. Kindly ";
+                    }
+                    else
+                    {
+                        ViewData["Message"] = "Login Name " + user.LoginName + " already exists";
+
+                        return View();
+                    }
                 }
 
-                return RedirectToAction("Details/"+user.LoginName);
+                return View(user);
+            }
+            catch (Exception e)
+            {
+                ViewData["Message"] = e.Message;
+                return View();
             }
 
-            return View(user);
         }
 
         [HttpGet]
-        [Route("User/Details/{loginName}")]
-        public IActionResult Details(string loginName)
+        public IActionResult UserLogin()
         {
-            if (loginName == null)
-            {
-                return NotFound();
-            }
-            var user = userDAL.GetUserData(loginName);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return View(user);
+            return View();
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UserLogin([Bind] User user)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    string LoginStatus = userDAL.ValidateLogin(user);
+
+                    if (LoginStatus == "Success")
+                    {
+                        var accountNumber = userDAL.GetUserData(user.LoginName).AccountNumber;
+
+                        var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, accountNumber.ToString())
+                    };
+                        ClaimsIdentity userIdentity = new ClaimsIdentity(claims, "login");
+                        ClaimsPrincipal principal = new ClaimsPrincipal(userIdentity);
+
+                        await HttpContext.SignInAsync(principal);
+                        return RedirectToAction("Index/" + accountNumber, "Home");
+                    }
+                    else
+                    {
+                        ViewData["UserLoginFailed"] = "Login Failed.Please enter correct credentials";
+                        return View();
+                    }
+                }
+                else
+                    return View();
+            }
+            catch (Exception e)
+            {
+                ViewData["Message"] = e.Message;
+                return View();
+            }
+
+        }
+
+        
     }
 }
