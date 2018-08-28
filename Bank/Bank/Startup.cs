@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Bank.Models;
 
 namespace Bank
 {
@@ -24,6 +25,10 @@ namespace Bank
 
                     });
             services.AddMvc();
+
+            services.AddSingleton<IConfiguration>(Configuration);
+            services.AddTransient<IUserDAL, UserDAL>();
+            services.AddTransient<ITransactionDAL, TransactionDAL>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

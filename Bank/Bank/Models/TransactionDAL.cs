@@ -8,7 +8,14 @@ using System.Threading.Tasks;
 
 namespace Bank.Models
 {
-    public class TransactionDAL
+    public interface ITransactionDAL
+    {
+        IEnumerable<Transaction> GetAllTransactions(long accountNumber);
+        void AddTransaction(Transaction trans);
+        decimal GetBalance(long accountNumber);
+    }
+
+    public class TransactionDAL: ITransactionDAL
     {
         string connectionString = "";
         

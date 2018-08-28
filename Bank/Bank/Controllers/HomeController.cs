@@ -14,13 +14,13 @@ namespace Bank.Controllers
     
     public class HomeController : Controller
     {
-        UserDAL userDAL = null;
-        TransactionDAL transactionDAL = null;
+        private IUserDAL _userDAL;
+        private ITransactionDAL _transactionDAL;
 
-        public HomeController(IConfiguration configuration)
+        public HomeController(IUserDAL userDAL, ITransactionDAL transactionDAL)
         {
-            userDAL = new UserDAL(configuration);
-            transactionDAL = new TransactionDAL(configuration);
+            _userDAL = userDAL;
+            _transactionDAL = transactionDAL;
         }
 
         [Authorize]
@@ -42,8 +42,8 @@ namespace Bank.Controllers
                     RedirectToAction("UserLogin", "User");
                 }
 
-                var user = userDAL.GetUserData(accountNumber);
-                var transactions = transactionDAL.GetAllTransactions(accountNumber);
+                var user = _userDAL.GetUserData(accountNumber);
+                var transactions = _transactionDAL.GetAllTransactions(accountNumber);
                 if (transactions.Count() == 0)
                 {
                     ViewData["Message"] = "No Records found";
@@ -51,7 +51,7 @@ namespace Bank.Controllers
 
                 ViewData["LoginName"] = user.LoginName;
                 ViewData["AccountNumber"] = accountNumber;
-                ViewData["Balance"] = transactionDAL.GetBalance(accountNumber);
+                ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
                 return View(transactions);
 
@@ -71,11 +71,11 @@ namespace Bank.Controllers
             {
                 var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
 
-                var user = userDAL.GetUserData(accountNumber);
+                var user = _userDAL.GetUserData(accountNumber);
 
                 ViewData["LoginName"] = user.LoginName;
                 ViewData["AccountNumber"] = accountNumber;
-                ViewData["Balance"] = transactionDAL.GetBalance(accountNumber);
+                ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
                 return View();
 
@@ -94,7 +94,7 @@ namespace Bank.Controllers
         {
             try
             {
-                transactionDAL.AddTransaction(new Transaction
+                _transactionDAL.AddTransaction(new Transaction
                 {
                     AccountNumber = trans.AccountNumber,
                     Amount = trans.Amount,
@@ -105,11 +105,11 @@ namespace Bank.Controllers
 
                 var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
 
-                var user = userDAL.GetUserData(accountNumber);
+                var user = _userDAL.GetUserData(accountNumber);
 
                 ViewData["LoginName"] = user.LoginName;
                 ViewData["AccountNumber"] = accountNumber;
-                ViewData["Balance"] = transactionDAL.GetBalance(accountNumber);
+                ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
                 return View();
             }
@@ -128,11 +128,11 @@ namespace Bank.Controllers
             {
                 var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
 
-                var user = userDAL.GetUserData(accountNumber);
+                var user = _userDAL.GetUserData(accountNumber);
 
                 ViewData["LoginName"] = user.LoginName;
                 ViewData["AccountNumber"] = accountNumber;
-                ViewData["Balance"] = transactionDAL.GetBalance(accountNumber);
+                ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
                 return View();
             }
@@ -152,15 +152,15 @@ namespace Bank.Controllers
             {
                 var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
 
-                var user = userDAL.GetUserData(accountNumber);
+                var user = _userDAL.GetUserData(accountNumber);
 
-                if (transactionDAL.GetBalance(accountNumber) < trans.Amount)
+                if (_transactionDAL.GetBalance(accountNumber) < trans.Amount)
                 {
                     ViewData["Message"] = "Not enough funds.";
                 }
                 else
                 {
-                    transactionDAL.AddTransaction(new Transaction
+                    _transactionDAL.AddTransaction(new Transaction
                     {
                         AccountNumber = accountNumber,
                         Amount = -trans.Amount,
@@ -172,7 +172,7 @@ namespace Bank.Controllers
 
                 ViewData["LoginName"] = user.LoginName;
                 ViewData["AccountNumber"] = accountNumber;
-                ViewData["Balance"] = transactionDAL.GetBalance(accountNumber);
+                ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
                 return View();
             }
@@ -190,11 +190,11 @@ namespace Bank.Controllers
             {
                 var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
 
-                var user = userDAL.GetUserData(accountNumber);
+                var user = _userDAL.GetUserData(accountNumber);
 
                 ViewData["LoginName"] = user.LoginName;
                 ViewData["AccountNumber"] = accountNumber;
-                ViewData["Balance"] = transactionDAL.GetBalance(accountNumber);
+                ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
                 return View();
             }
@@ -213,15 +213,15 @@ namespace Bank.Controllers
             {
                 var sourceAccountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
 
-                var user = userDAL.GetUserData(sourceAccountNumber);
+                var user = _userDAL.GetUserData(sourceAccountNumber);
 
-                if (transactionDAL.GetBalance(sourceAccountNumber) < trans.Amount)
+                if (_transactionDAL.GetBalance(sourceAccountNumber) < trans.Amount)
                 {
                     ViewData["Message"] = "Not enough funds.";
                 }
                 else
                 {
-                    transactionDAL.AddTransaction(new Transaction
+                    _transactionDAL.AddTransaction(new Transaction
                     {
                         AccountNumber = sourceAccountNumber,
                         Amount = -trans.Amount,
@@ -230,7 +230,7 @@ namespace Bank.Controllers
                         Destination = trans.AccountNumber
                     });
 
-                    transactionDAL.AddTransaction(new Transaction
+                    _transactionDAL.AddTransaction(new Transaction
                     {
                         AccountNumber = trans.AccountNumber,
                         Amount = trans.Amount,
@@ -244,7 +244,7 @@ namespace Bank.Controllers
 
                 ViewData["LoginName"] = user.LoginName;
                 ViewData["AccountNumber"] = sourceAccountNumber;
-                ViewData["Balance"] = transactionDAL.GetBalance(sourceAccountNumber);
+                ViewData["Balance"] = _transactionDAL.GetBalance(sourceAccountNumber);
 
                 return View();
             }

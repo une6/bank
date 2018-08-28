@@ -12,18 +12,18 @@ namespace Bank.Controllers
 {
     public class UserController : Controller
     {
-        UserDAL userDAL = null;
+        private IUserDAL _userDAL;
 
-        public UserController(IConfiguration configuration)
+        public UserController(IUserDAL userDAL)
         {
-            userDAL = new UserDAL(configuration);
+            _userDAL = userDAL;
         }
 
         public IActionResult Index()
         {
             try
             {
-                var lstUsers = userDAL.GetAllUsers();
+                var lstUsers = _userDAL.GetAllUsers();
 
                 if (lstUsers.Count() == 0)
                 {
@@ -53,9 +53,9 @@ namespace Bank.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    if (userDAL.LoginNameExists(user.LoginName) != true)
+                    if (_userDAL.LoginNameExists(user.LoginName) != true)
                     {
-                        userDAL.AddUser(user);
+                        _userDAL.AddUser(user);
 
                         ViewData["SuccessMessage"] = "User has been created. Kindly ";
                     }
@@ -91,11 +91,11 @@ namespace Bank.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    string LoginStatus = userDAL.ValidateLogin(user);
+                    string LoginStatus = _userDAL.ValidateLogin(user);
 
                     if (LoginStatus == "Success")
                     {
-                        var accountNumber = userDAL.GetUserData(user.LoginName).AccountNumber;
+                        var accountNumber = _userDAL.GetUserData(user.LoginName).AccountNumber;
 
                         var claims = new List<Claim>
                     {

@@ -8,7 +8,17 @@ using System.Threading.Tasks;
 
 namespace Bank.Models
 {
-    public class UserDAL
+    public interface IUserDAL
+    {
+        IEnumerable<User> GetAllUsers();
+        void AddUser(User user);
+        User GetUserData(string loginName);
+        User GetUserData(long accountNumber);
+        bool LoginNameExists(string loginName);
+        string ValidateLogin(User user);
+    }
+
+    public class UserDAL: IUserDAL
     {
         string connectionString = "";
         
