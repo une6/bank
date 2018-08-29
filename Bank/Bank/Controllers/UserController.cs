@@ -98,13 +98,14 @@ namespace Bank.Controllers
                         var accountNumber = _userDAL.GetUserData(user.LoginName).AccountNumber;
 
                         var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, accountNumber.ToString())
-                    };
+                        {
+                            new Claim(ClaimTypes.Name, accountNumber.ToString())
+                        };
                         ClaimsIdentity userIdentity = new ClaimsIdentity(claims, "login");
                         ClaimsPrincipal principal = new ClaimsPrincipal(userIdentity);
 
                         await HttpContext.SignInAsync(principal);
+
                         return RedirectToAction("Index/" + accountNumber, "Home");
                     }
                     else
