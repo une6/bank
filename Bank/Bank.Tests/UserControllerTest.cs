@@ -5,6 +5,9 @@ using Bank.Controllers;
 using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace Bank.Tests
 {
@@ -53,7 +56,7 @@ namespace Bank.Tests
 
         /*
         [TestMethod]
-        public void LoginSuccess()
+        public async Task LoginSuccess()
         {
             var mockUserDAL = new Mock<IUserDAL>();
 
@@ -61,19 +64,44 @@ namespace Bank.Tests
             var accountNumber = 1;
 
             mockUserDAL.Setup(x => x.ValidateLogin(It.IsAny<User>())).Returns("Success");
+            mockUserDAL.Setup(x => x.GetUserData(It.IsAny<string>())).Returns(new User
+            {
+                AccountNumber = accountNumber
+            });
 
-            var _userController = new UserController(mockUserDAL.Object);
+            var authServiceMock = new Mock<IAuthenticationService>();
+            authServiceMock
+                .Setup(_ => _.SignInAsync(It.IsAny<HttpContext>(), It.IsAny<string>(), It.IsAny<ClaimsPrincipal>(), It.IsAny<AuthenticationProperties>()))
+                .Returns(Task.FromResult((object)null));
 
-            var result = _userController.UserLogin(new User
+            var serviceProviderMock = new Mock<IServiceProvider>();
+            serviceProviderMock
+                .Setup(_ => _.GetService(typeof(IAuthenticationService)))
+                .Returns(authServiceMock.Object);
+
+            var _userController = new UserController(mockUserDAL.Object)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext
+                    {
+                        RequestServices = serviceProviderMock.Object
+                    }
+                }
+            };
+
+            //var _userController = new UserController(mockUserDAL.Object);
+
+            var result = await _userController.UserLogin(new User
             {
                 LoginName = name
-            }).Result;
+            });
 
             var r = result as ViewResult;
             Assert.AreEqual(r.ViewData["UserLoginFailed"], String.Empty);
         }
         */
-
+        
         [TestMethod]
         public void LoginFailed()
         {
