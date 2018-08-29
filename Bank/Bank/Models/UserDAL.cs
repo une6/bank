@@ -106,7 +106,7 @@ namespace Bank.Models
         //Get the details of a particular user  
         public User GetUserData(long accountNumber)
         {
-            User user = null;
+            User user = new User();
 
             using (SqlConnection con = new SqlConnection(connectionString))
             {
