@@ -170,12 +170,12 @@ namespace Bank.Tests
         }
 
         [TestMethod]
-        public void WithdrawWithValues()
+        public void WithdrawWithEnoughFunds()
         {
             var name = "testuser1";
-            var balance = 1.1m;
+            var balance = 1000.1m;
             var accountNumber = 1;
-
+            var withdrawAmount = 10;
 
             var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
             {
@@ -200,24 +200,67 @@ namespace Bank.Tests
 
             var result = _homeController.Withdraw(new Transaction
             {
-                Amount = 1.1m,
-                AccountNumber = accountNumber
+                Amount = withdrawAmount
             });
 
             var r = result as ViewResult;
 
+            Assert.AreEqual(r.ViewData["SuccessMessage"], "Withdraw success");
             Assert.AreEqual(r.ViewData["LoginName"], name);
             Assert.AreEqual(r.ViewData["AccountNumber"].ToString(), accountNumber.ToString());
             Assert.AreEqual(r.ViewData["Balance"], balance);
         }
 
         [TestMethod]
-        public void TransferWithValues()
+        public void WithdrawWithNotEnoughFunds()
         {
             var name = "testuser1";
             var balance = 1.1m;
             var accountNumber = 1;
+            var withdrawAmount = 10;
 
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                 new Claim(ClaimTypes.Name, accountNumber.ToString())
+            }));
+
+            var mockUserDAL = new Mock<IUserDAL>();
+            var mockTransactionDAL = new Mock<ITransactionDAL>();
+
+            mockUserDAL.Setup(x => x.GetUserData(It.IsAny<long>())).Returns(new User
+            {
+                LoginName = name
+            });
+
+            mockTransactionDAL.Setup(x => x.GetBalance(It.IsAny<long>())).Returns(balance);
+
+            var _homeController = new HomeController(mockUserDAL.Object, mockTransactionDAL.Object);
+            _homeController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext() { User = user }
+            };
+
+            var result = _homeController.Withdraw(new Transaction
+            {
+                Amount = withdrawAmount
+            });
+
+            var r = result as ViewResult;
+
+            Assert.AreEqual(r.ViewData["Message"], "Not enough funds.");
+            Assert.AreEqual(r.ViewData["LoginName"], name);
+            Assert.AreEqual(r.ViewData["AccountNumber"].ToString(), accountNumber.ToString());
+            Assert.AreEqual(r.ViewData["Balance"], balance);
+        }
+
+
+        [TestMethod]
+        public void TransferWithEnoughFunds()
+        {
+            var name = "testuser1";
+            var balance = 1000.1m;
+            var accountNumber = 1;
+            var withdrawAmount = 10;
 
             var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
             {
@@ -242,12 +285,54 @@ namespace Bank.Tests
 
             var result = _homeController.Transfer(new Transaction
             {
-                Amount = 1.1m,
-                AccountNumber = accountNumber
+                Amount = withdrawAmount
             });
 
             var r = result as ViewResult;
 
+            Assert.AreEqual(r.ViewData["SuccessMessage"], "Transfer success");
+            Assert.AreEqual(r.ViewData["LoginName"], name);
+            Assert.AreEqual(r.ViewData["AccountNumber"].ToString(), accountNumber.ToString());
+            Assert.AreEqual(r.ViewData["Balance"], balance);
+        }
+
+        [TestMethod]
+        public void TransferWithNotEnoughFunds()
+        {
+            var name = "testuser1";
+            var balance = 1.1m;
+            var accountNumber = 1;
+            var withdrawAmount = 10;
+
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                 new Claim(ClaimTypes.Name, accountNumber.ToString())
+            }));
+
+            var mockUserDAL = new Mock<IUserDAL>();
+            var mockTransactionDAL = new Mock<ITransactionDAL>();
+
+            mockUserDAL.Setup(x => x.GetUserData(It.IsAny<long>())).Returns(new User
+            {
+                LoginName = name
+            });
+
+            mockTransactionDAL.Setup(x => x.GetBalance(It.IsAny<long>())).Returns(balance);
+
+            var _homeController = new HomeController(mockUserDAL.Object, mockTransactionDAL.Object);
+            _homeController.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext() { User = user }
+            };
+
+            var result = _homeController.Transfer(new Transaction
+            {
+                Amount = withdrawAmount
+            });
+
+            var r = result as ViewResult;
+
+            Assert.AreEqual(r.ViewData["Message"], "Not enough funds.");
             Assert.AreEqual(r.ViewData["LoginName"], name);
             Assert.AreEqual(r.ViewData["AccountNumber"].ToString(), accountNumber.ToString());
             Assert.AreEqual(r.ViewData["Balance"], balance);
