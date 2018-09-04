@@ -18,6 +18,8 @@ namespace Bank.Controllers
         private IUserDAL _userDAL;
         private ITransactionDAL _transactionDAL;
 
+        private readonly object transactionLock = new object();
+
         public HomeController(IUserDAL userDAL, ITransactionDAL transactionDAL)
         {
             _userDAL = userDAL;
@@ -32,34 +34,36 @@ namespace Bank.Controllers
             {
                 try
                 {
-                    if (HttpContext.User.Identity.Name != accountNumber.ToString())
+                    lock(transactionLock)
                     {
-                        ViewData["Message"] = "Unauthorized to view this record";
+                        if (HttpContext.User.Identity.Name != accountNumber.ToString())
+                        {
+                            ViewData["Message"] = "Unauthorized to view this record";
+
+                            ts.Complete();
+                            return View();
+                        }
+
+                        if (accountNumber == 0)
+                        {
+                            ts.Complete();
+                            RedirectToAction("UserLogin", "User");
+                        }
+
+                        var user = _userDAL.GetUserData(accountNumber);
+                        var transactions = _transactionDAL.GetAllTransactions(accountNumber);
+                        if (transactions.Count() == 0)
+                        {
+                            ViewData["Message"] = "No Records found";
+                        }
+
+                        ViewData["LoginName"] = user.LoginName;
+                        ViewData["AccountNumber"] = accountNumber;
+                        ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
                         ts.Complete();
-                        return View();
+                        return View(transactions);
                     }
-
-                    if (accountNumber == 0)
-                    {
-                        ts.Complete();
-                        RedirectToAction("UserLogin", "User");
-                    }
-
-                    var user = _userDAL.GetUserData(accountNumber);
-                    var transactions = _transactionDAL.GetAllTransactions(accountNumber);
-                    if (transactions.Count() == 0)
-                    {
-                        ViewData["Message"] = "No Records found";
-                    }
-
-                    ViewData["LoginName"] = user.LoginName;
-                    ViewData["AccountNumber"] = accountNumber;
-                    ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
-
-                    ts.Complete();
-                    return View(transactions);
-
                 }
                 catch (Exception e)
                 {
@@ -74,27 +78,30 @@ namespace Bank.Controllers
         [Authorize]
         public IActionResult Deposit()
         {
-            using (var ts = new TransactionScope())
+            lock(transactionLock)
             {
-                try
+                using (var ts = new TransactionScope())
                 {
-                    var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
+                    try
+                    {
+                        var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
 
-                    var user = _userDAL.GetUserData(accountNumber);
+                        var user = _userDAL.GetUserData(accountNumber);
 
-                    ViewData["LoginName"] = user.LoginName;
-                    ViewData["AccountNumber"] = accountNumber;
-                    ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
+                        ViewData["LoginName"] = user.LoginName;
+                        ViewData["AccountNumber"] = accountNumber;
+                        ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
-                    ts.Complete();
-                    return View();
+                        ts.Complete();
+                        return View();
 
-                }
-                catch (Exception e)
-                {
-                    ViewData["Message"] = e.Message;
-                    ts.Dispose();
-                    return View();
+                    }
+                    catch (Exception e)
+                    {
+                        ViewData["Message"] = e.Message;
+                        ts.Dispose();
+                        return View();
+                    }
                 }
             }
         }
@@ -103,35 +110,38 @@ namespace Bank.Controllers
         [HttpPost]
         public IActionResult Deposit([Bind]Models.Transaction trans)
         {
-            using (var ts = new TransactionScope())
+            lock(transactionLock)
             {
-                try
+                using (var ts = new TransactionScope())
                 {
-                    _transactionDAL.AddTransaction(new Models.Transaction
+                    try
                     {
-                        AccountNumber = trans.AccountNumber,
-                        Amount = trans.Amount,
-                        Type = "DEPOSIT"
-                    });
+                        _transactionDAL.AddTransaction(new Models.Transaction
+                        {
+                            AccountNumber = trans.AccountNumber,
+                            Amount = trans.Amount,
+                            Type = "DEPOSIT"
+                        });
 
-                    ViewData["SuccessMessage"] = "Deposit success";
+                        ViewData["SuccessMessage"] = "Deposit success";
 
-                    var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
+                        var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
 
-                    var user = _userDAL.GetUserData(accountNumber);
+                        var user = _userDAL.GetUserData(accountNumber);
 
-                    ViewData["LoginName"] = user.LoginName;
-                    ViewData["AccountNumber"] = accountNumber;
-                    ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
+                        ViewData["LoginName"] = user.LoginName;
+                        ViewData["AccountNumber"] = accountNumber;
+                        ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
-                    ts.Complete();
-                    return View();
-                }
-                catch (Exception e)
-                {
-                    ViewData["Message"] = e.Message;
-                    ts.Dispose();
-                    return View();
+                        ts.Complete();
+                        return View();
+                    }
+                    catch (Exception e)
+                    {
+                        ViewData["Message"] = e.Message;
+                        ts.Dispose();
+                        return View();
+                    }
                 }
             }
         }
@@ -139,70 +149,77 @@ namespace Bank.Controllers
         [Authorize]
         public IActionResult Withdraw()
         {
-            using (var ts = new TransactionScope())
+            lock(transactionLock)
             {
-                try
+                using (var ts = new TransactionScope())
                 {
-                    var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
+                    try
+                    {
+                        var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
 
-                    var user = _userDAL.GetUserData(accountNumber);
+                        var user = _userDAL.GetUserData(accountNumber);
 
-                    ViewData["LoginName"] = user.LoginName;
-                    ViewData["AccountNumber"] = accountNumber;
-                    ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
+                        ViewData["LoginName"] = user.LoginName;
+                        ViewData["AccountNumber"] = accountNumber;
+                        ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
-                    ts.Complete();
-                    return View();
-                }
-                catch (Exception e)
-                {
-                    ViewData["Message"] = e.Message;
-                    ts.Dispose();
-                    return View();
+                        ts.Complete();
+                        return View();
+                    }
+                    catch (Exception e)
+                    {
+                        ViewData["Message"] = e.Message;
+                        ts.Dispose();
+                        return View();
+                    }
                 }
             }
+
         }
 
         [Authorize]
         [HttpPost]
         public IActionResult Withdraw([Bind]Models.Transaction trans)
         {
-            using(var ts = new TransactionScope())
+            lock(transactionLock)
             {
-                try
+                using (var ts = new TransactionScope())
                 {
-                    var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
-
-                    var user = _userDAL.GetUserData(accountNumber);
-
-                    if (_transactionDAL.GetBalance(accountNumber) < trans.Amount)
+                    try
                     {
-                        ViewData["Message"] = "Not enough funds.";
-                    }
-                    else
-                    {
-                        _transactionDAL.AddTransaction(new Models.Transaction
+                        var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
+
+                        var user = _userDAL.GetUserData(accountNumber);
+
+                        if (_transactionDAL.GetBalance(accountNumber) < trans.Amount)
                         {
-                            AccountNumber = accountNumber,
-                            Amount = -trans.Amount,
-                            Type = "WITHDRAW"
-                        });
+                            ViewData["Message"] = "Not enough funds.";
+                        }
+                        else
+                        {
+                            _transactionDAL.AddTransaction(new Models.Transaction
+                            {
+                                AccountNumber = accountNumber,
+                                Amount = -trans.Amount,
+                                Type = "WITHDRAW"
+                            });
 
-                        ViewData["SuccessMessage"] = "Withdraw success";
+                            ViewData["SuccessMessage"] = "Withdraw success";
+                        }
+
+                        ViewData["LoginName"] = user.LoginName;
+                        ViewData["AccountNumber"] = accountNumber;
+                        ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
+
+                        ts.Complete();
+                        return View();
                     }
-
-                    ViewData["LoginName"] = user.LoginName;
-                    ViewData["AccountNumber"] = accountNumber;
-                    ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
-
-                    ts.Complete();
-                    return View();
-                }
-                catch (Exception e)
-                {
-                    ViewData["Message"] = e.Message;
-                    ts.Dispose();
-                    return View();
+                    catch (Exception e)
+                    {
+                        ViewData["Message"] = e.Message;
+                        ts.Dispose();
+                        return View();
+                    }
                 }
             }
         }
@@ -210,26 +227,29 @@ namespace Bank.Controllers
         [Authorize]
         public IActionResult Transfer()
         {
-            using (var ts = new TransactionScope())
+            lock(transactionLock)
             {
-                try
+                using (var ts = new TransactionScope())
                 {
-                    var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
+                    try
+                    {
+                        var accountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
 
-                    var user = _userDAL.GetUserData(accountNumber);
+                        var user = _userDAL.GetUserData(accountNumber);
 
-                    ViewData["LoginName"] = user.LoginName;
-                    ViewData["AccountNumber"] = accountNumber;
-                    ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
+                        ViewData["LoginName"] = user.LoginName;
+                        ViewData["AccountNumber"] = accountNumber;
+                        ViewData["Balance"] = _transactionDAL.GetBalance(accountNumber);
 
-                    ts.Complete();
-                    return View();
-                }
-                catch (Exception e)
-                {
-                    ViewData["Message"] = e.Message;
-                    ts.Dispose();
-                    return View();
+                        ts.Complete();
+                        return View();
+                    }
+                    catch (Exception e)
+                    {
+                        ViewData["Message"] = e.Message;
+                        ts.Dispose();
+                        return View();
+                    }
                 }
             }
         }
@@ -238,53 +258,56 @@ namespace Bank.Controllers
         [HttpPost]
         public IActionResult Transfer([Bind]Models.Transaction trans)
         {
-            using (var ts = new TransactionScope())
+            lock(transactionLock)
             {
-                try
+                using (var ts = new TransactionScope())
                 {
-                    var sourceAccountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
-
-                    var user = _userDAL.GetUserData(sourceAccountNumber);
-
-                    if (_transactionDAL.GetBalance(sourceAccountNumber) < trans.Amount)
+                    try
                     {
-                        ViewData["Message"] = "Not enough funds.";
+                        var sourceAccountNumber = Convert.ToInt64(HttpContext.User.Identity.Name);
+
+                        var user = _userDAL.GetUserData(sourceAccountNumber);
+
+                        if (_transactionDAL.GetBalance(sourceAccountNumber) < trans.Amount)
+                        {
+                            ViewData["Message"] = "Not enough funds.";
+                        }
+                        else
+                        {
+                            _transactionDAL.AddTransaction(new Models.Transaction
+                            {
+                                AccountNumber = sourceAccountNumber,
+                                Amount = -trans.Amount,
+                                Type = "TRANSFER",
+                                Source = sourceAccountNumber,
+                                Destination = trans.AccountNumber
+                            });
+
+                            _transactionDAL.AddTransaction(new Models.Transaction
+                            {
+                                AccountNumber = trans.AccountNumber,
+                                Amount = trans.Amount,
+                                Type = "TRANSFER",
+                                Source = sourceAccountNumber,
+                                Destination = trans.AccountNumber
+                            });
+
+                            ViewData["SuccessMessage"] = "Transfer success";
+                        }
+
+                        ViewData["LoginName"] = user.LoginName;
+                        ViewData["AccountNumber"] = sourceAccountNumber;
+                        ViewData["Balance"] = _transactionDAL.GetBalance(sourceAccountNumber);
+
+                        ts.Complete();
+                        return View();
                     }
-                    else
+                    catch (Exception e)
                     {
-                        _transactionDAL.AddTransaction(new Models.Transaction
-                        {
-                            AccountNumber = sourceAccountNumber,
-                            Amount = -trans.Amount,
-                            Type = "TRANSFER",
-                            Source = sourceAccountNumber,
-                            Destination = trans.AccountNumber
-                        });
-
-                        _transactionDAL.AddTransaction(new Models.Transaction
-                        {
-                            AccountNumber = trans.AccountNumber,
-                            Amount = trans.Amount,
-                            Type = "TRANSFER",
-                            Source = sourceAccountNumber,
-                            Destination = trans.AccountNumber
-                        });
-
-                        ViewData["SuccessMessage"] = "Transfer success";
+                        ViewData["Message"] = e.Message;
+                        ts.Dispose();
+                        return View();
                     }
-
-                    ViewData["LoginName"] = user.LoginName;
-                    ViewData["AccountNumber"] = sourceAccountNumber;
-                    ViewData["Balance"] = _transactionDAL.GetBalance(sourceAccountNumber);
-
-                    ts.Complete();
-                    return View();
-                }
-                catch (Exception e)
-                {
-                    ViewData["Message"] = e.Message;
-                    ts.Dispose();
-                    return View();
                 }
             }
         }
