@@ -119,7 +119,7 @@ namespace Bank.Controllers
             }
             catch (Exception e)
             {
-                ViewData["Message"] = e.Message;
+                ViewData["UserLoginFailed"] = e.Message;
                 return View();
             }
 
